@@ -1,5 +1,6 @@
 var canvas = document.getElementById('paint');
 var ctx_pad = canvas.getContext('2d');
+ctx_pad.lineWidth = 5;
  
 var sketch = document.getElementById('sketch');
 var sketch_style = getComputedStyle(sketch);
@@ -36,6 +37,13 @@ canvas.addEventListener('mousedown', function(e) {
  
 canvas.addEventListener('mouseup', function() {
     canvas.removeEventListener('mousemove', onPaint, false);
+}, false);
+
+document.addEventListener('keypress', function(e) {
+    
+    if (e.code === 'KeyC') {
+        ctx_pad.clearRect(0, 0, canvas.width, canvas.height);
+    }
 }, false);
  
 var onPaint = function() {
