@@ -21,8 +21,8 @@ class Model {
     }
 
     async load_model(){
-        this.regression = await tf.loadLayersModel('models/js_regress_keras_weight/model.json')
-        this.extract_feature = await tf.loadLayersModel('models/js_feature_keras_weight/model.json')
+        this.regression = await tf.loadLayersModel('models/js_regress_keras_weight_bias0.5/model.json')
+        this.extract_feature = await tf.loadLayersModel('models/js_feature_keras_weight_bias0.5/model.json')
         console.log('finish load');
         model_setup = 1;
         
