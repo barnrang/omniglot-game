@@ -1,5 +1,9 @@
-const WIDTH = 1600
-const HEIGHT = 900
+const WIDTH = (window.innerWidth
+|| document.documentElement.clientWidth
+|| document.body.clientWidth) - 500;//1280
+const HEIGHT = (window.innerHeight
+|| document.documentElement.clientHeight
+|| document.body.clientHeight ); //720
 const NUM_IMAGE = 19280
 var THRESHOLD = 0.95
 var LOOPTIME = 400
@@ -47,7 +51,7 @@ class Model {
 
 class FallingObject{
     constructor(){
-        this.x = parseInt(Math.random() * 1200) + 200;
+        this.x = parseInt(Math.random() * (WIDTH - 400)) + 200;
         this.y = 0;
         this.dy = 5;
 
@@ -126,7 +130,6 @@ class Game {
 
             case 'playing':
 
-                console.log(this)
                 
                 if (this.counter % REGENTIME == 0) {
                     this.counter = 0;
