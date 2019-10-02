@@ -1,13 +1,14 @@
+var monodata = new Array(420 * 420 * 4).fill(0);
+
 function extract_image(){
     let imgdata = ctx_pad.getImageData(0,0,420,420)
-    let monodata = [];
+    console.log(monodata.length);
+    
     for (let i=0, len = imgdata.data.length/4; i < len; i += 1) {
-                    monodata.push(imgdata.data[i*4+3]);
-                    monodata.push(0);
-                    monodata.push(0);
-                    monodata.push(0);
+                    monodata[i*4] = imgdata.data[i*4+3];
                 }
     let image_data = new ImageData(new Uint8ClampedArray(monodata), 420, 420);
+    console.log(monodata.length);
     return tf.browser.fromPixels(image_data, 1).sub(255).abs().resizeNearestNeighbor([105,105]).expandDims()
 }
 
