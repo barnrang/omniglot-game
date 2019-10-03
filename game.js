@@ -5,7 +5,7 @@ const HEIGHT = (window.innerHeight
 || document.documentElement.clientHeight
 || document.body.clientHeight ); //720
 const NUM_IMAGE = 19280
-var THRESHOLD = 0.95
+var THRESHOLD = 2.5
 var LOOPTIME = 400
 var REGENTIME = 10
 const HEIGHT7 = parseInt(HEIGHT / 7)
@@ -25,26 +25,20 @@ class Model {
     }
 
     async load_model(){
-        this.regression = await tf.loadLayersModel('models/js_regress_keras_weight_bias0.5/model.json')
-        this.extract_feature = await tf.loadLayersModel('models/js_feature_keras_weight_bias0.5/model.json')
+        this.extract_feature = await tf.loadLayersModel('models/conv_proto_js/model.json')
         console.log('finish load');
         model_setup = 1;
         
     }
 
     get_feature(imgs) {
-        return this.extract_feature.predict(imgs);
-    }
-    
-    get_regress(diff_features) {
-        return this.regression.predict(diff_features);
+        return this.extract_feature.predict(imgs.div(255.));
     }
 
-    get_predict(imgs1, imgs2){
+    get_distance(imgs1, imgs2){
         const feature1 = this.get_feature(imgs1);
         const feature2 = this.get_feature(imgs2);
-        const diff_features = tf.abs(feature1 - feature2);
-        return this.get_regress(diff_features)
+        return tf.norm(feature1 - feature2);
     }
 
 }
@@ -60,7 +54,8 @@ class FallingObject{
         this.img = new Image();
         this.feature = null;
         this.img.onload = () => {
-            const reshape_img = tf.browser.fromPixels(this.img, 1).expandDims();
+            const reshape_img = tf.browser.fromPixels(this.img, 1).resizeNearestNeighbor([28,28]).expandDims();
+            console.log(reshape_img)
             this.feature = model.get_feature(reshape_img);
         }
         this.img.src = this.file_name;
@@ -209,10 +204,9 @@ document.addEventListener('keypress', function(e) {
         let feature_array = game_engine.falling_object_list.map(x=>x.feature);
         let concat_feature = tf.concat(feature_array, 0);
         let tiled_feature = tf.tile(drawn_feature, [feature_array.length, 1]);
-        let diff = tf.abs(tf.sub(concat_feature, tiled_feature))
-        let result = model.get_regress(diff);
-        let validity = tf.greater(result, THRESHOLD).reshape([-1]).arraySync();
-        console.log(result.reshape([-1]).arraySync());
+        let diff = tf.norm(tf.sub(concat_feature, tiled_feature), 'euclidean', 1);
+        let validity = tf.less(diff, THRESHOLD).reshape([-1]).arraySync();
+        console.log(diff.reshape([-1]).arraySync());
         for (let i = validity.length-1; i > -1 ; i--) {
             if (validity[i] == 1) {
                 game_engine.falling_object_list.splice(i, 1);
@@ -227,7 +221,7 @@ function main() {
     c.setAttribute('width', WIDTH);
     c.setAttribute('height', HEIGHT)
 
-    ctx_pad.lineWidth = 20;
+    ctx_pad.lineWidth = 15;
     ctx.font = "50px Arial";
 
     game_engine.loop()

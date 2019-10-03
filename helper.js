@@ -9,7 +9,7 @@ function extract_image(){
                 }
     let image_data = new ImageData(new Uint8ClampedArray(monodata), 420, 420);
     console.log(monodata.length);
-    return tf.browser.fromPixels(image_data, 1).sub(255).abs().resizeNearestNeighbor([105,105]).expandDims()
+    return tf.browser.fromPixels(image_data, 1).sub(255).abs().resizeNearestNeighbor([28,28]).expandDims()
 }
 
 function get_result(tensor1, tensor2){
