@@ -5,14 +5,25 @@ const HEIGHT = (window.innerHeight
 || document.documentElement.clientHeight
 || document.body.clientHeight ); //720
 const NUM_IMAGE = 19280
-var THRESHOLD = 0.95
+var THRESHOLD = 0.85
 var LOOPTIME = 400
 var REGENTIME = 10
 const HEIGHT7 = parseInt(HEIGHT / 7)
 const WIDTH6 = parseInt(WIDTH / 6)
+const HEIGHT14 = parseInt(HEIGHT / 14)
+const WIDTH12 = parseInt(WIDTH / 12)
 
 model_setup = 0
 add_screen_click_event = 0
+score = 0
+
+function renderHowToPlay() {
+    ctx.font = "20px Arial"
+    ctx.fillText('z - 打つ', parseInt(WIDTH12 * 11), parseInt(HEIGHT14 * 3))
+    ctx.fillText('c - クリア', parseInt(WIDTH12 * 11), parseInt(HEIGHT14 * 4))
+    ctx.fillText('r - リスタート', parseInt(WIDTH12 * 11), parseInt(HEIGHT14 * 5))
+    ctx.font = "50px Arial"
+}
 
 class Model {
     constructor() {
@@ -25,8 +36,8 @@ class Model {
     }
 
     async load_model(){
-        this.regression = await tf.loadLayersModel('models/js_regress_keras_weight_bias0.5/model.json')
-        this.extract_feature = await tf.loadLayersModel('models/js_feature_keras_weight_bias0.5/model.json')
+        this.regression = await tf.loadLayersModel('models/js_regress_keras_weight_bias0.5_new/model.json')
+        this.extract_feature = await tf.loadLayersModel('models/js_feature_keras_weight_bias0.5_new/model.json')
         console.log('finish load');
         model_setup = 1;
         
@@ -68,6 +79,7 @@ class FallingObject{
         
     }
 
+
     update() {
         this.y = this.y + this.dy;
     }
@@ -91,19 +103,25 @@ class SelectButton {
         this.text = text
     }
 
+    set_text(text) {
+        this.text = text;
+    }
+
     inBox (x,y) {
         return (x >= this.x) && (x < (this.x + this.width)) & (y >= this.y) && (y < (this.y + this.height))
     }
 
     render () {
         ctx.strokeRect(this.x,this.y, this.width, this.height)
+        ctx.textAlign="center"; 
+        ctx.textBaseline = "middle";
         ctx.fillText(this.text, parseInt((this.x + this.width / 2)), parseInt((this.y + this.height / 2)))
     }
 }
 
 class Game {
     constructor() {
-        this.game_state = 'select-mode'
+        this.game_state = 'select-mode';
         this.falling_object_list = [];
         
         this.makeSelectButton = this.makeSelectButton.bind(this)
@@ -126,6 +144,7 @@ class Game {
                 for (let i = 0; i < this.select_button_list.length; i++){
                     this.select_button_list[i].render()
                 }
+                this.score_box.render()
                 break;
 
             case 'playing':
@@ -143,13 +162,22 @@ class Game {
                 for (i = this.falling_object_list.length - 1;  i > -1 ; i--) {
                     this.falling_object_list[i].update();
                     if (this.falling_object_list[i].valid()) this.falling_object_list[i].render();
-                    else this.falling_object_list.splice(i, 1);
+                    else {
+                        this.game_state = 'death'
+                        this.falling_object_list = [];
+                    }
                 }
+                this.score_box.set_text('Score: ' + score);
+                this.score_box.render();
+                
+
                 break;
             
             case 'death':
+                this.score_box.render();
                 break;
         }
+        renderHowToPlay()
         setTimeout(this.loop, LOOPTIME);
     }
 
@@ -190,7 +218,9 @@ class Game {
         let button1 = new SelectButton(WIDTH6, HEIGHT7, WIDTH6 * 4, HEIGHT7, 'Harder')
         let button2 = new SelectButton(WIDTH6, 3 * HEIGHT7, WIDTH6 * 4, HEIGHT7, 'Hardest')
         let button3 = new SelectButton(WIDTH6, 5 * HEIGHT7, WIDTH6 * 4, HEIGHT7, 'Lunatic')
+        this.score_box = new SelectButton(WIDTH6*5, 0, WIDTH6, HEIGHT7, 'Score: 0')
         this.select_button_list = [button1, button2, button3];
+
     }
 }
 
@@ -215,6 +245,7 @@ document.addEventListener('keypress', function(e) {
         console.log(result.reshape([-1]).arraySync());
         for (let i = validity.length-1; i > -1 ; i--) {
             if (validity[i] == 1) {
+                score++;
                 game_engine.falling_object_list.splice(i, 1);
             }
         }
